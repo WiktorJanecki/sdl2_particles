@@ -9,6 +9,7 @@ impl ParticlesState {
                 pos_y: 0.0,
                 vel_x: 0.0,
                 vel_y: 0.0,
+                vel_angular: 0.0,
                 size_x: 0,
                 size_y: 0,
                 color: Color::WHITE,
@@ -30,6 +31,7 @@ impl ParticlesState {
             .for_each(|particle| {
                 particle.pos_x += particle.vel_x * dt;
                 particle.pos_y += particle.vel_y * dt;
+                particle.rotation = (particle.rotation + particle.vel_angular * dt) % 360.0;
                 particle.lifetime -= dt;
                 if particle.lifetime <= 0.0 {
                     particle.is_alive = false
@@ -61,6 +63,9 @@ impl ParticlesState {
                     ParticleEffect::Rotation(angle) => {
                         particle.rotation = *angle;
                     },
+                    ParticleEffect::Rotating(angular_velocity) => {
+                        particle.vel_angular = *angular_velocity;
+                    },
                 }
             });
             self.emitting_index+=1;
@@ -91,6 +96,7 @@ struct Particle {
     pos_y: f32,
     vel_x: f32,
     vel_y: f32,
+    vel_angular: f32,
     size_x: u32,
     size_y: u32,
     rotation: f32,
@@ -108,7 +114,8 @@ pub struct ParticleType {
 }
 pub enum ParticleEffect {
     Rotation(f32),
-    Moving((f32, f32)),
+    Moving((f32, f32)), 
+    Rotating(f32),
 }
 
 pub struct ParticleTypeBuilder {
@@ -167,12 +174,14 @@ mod tests {
             last.vel_x = 1.0;
             last.lifetime = 5.0;
             last.is_alive = true;
+            last.vel_angular = 180.0;
         }
         particles_state.update(Duration::from_secs(5));
         let last = particles_state.pool.get(15).unwrap();
         assert_eq!(last.pos_x, 5.0);
         assert_eq!(last.lifetime, 0.0);
         assert_eq!(last.is_alive, false);
+        assert_eq!(last.rotation, 180.0);
     }
 
     #[test]
