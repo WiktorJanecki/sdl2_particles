@@ -14,6 +14,7 @@ impl ParticlesState {
                 color: Color::WHITE,
                 lifetime: 0.0,
                 is_alive: false,
+                rotation: 0.0,
             })
         }
         return ParticlesState {
@@ -57,6 +58,9 @@ impl ParticlesState {
                         particle.vel_x = *x;
                         particle.vel_y = *y;
                     },
+                    ParticleEffect::Rotation(angle) => {
+                        particle.rotation = *angle;
+                    },
                 }
             });
             self.emitting_index+=1;
@@ -66,9 +70,14 @@ impl ParticlesState {
         }
     }
     pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas){
+        let mut pixel_data = [1];
+        let white_surface = sdl2::surface::Surface::from_data(&mut pixel_data, 1, 1, 1, sdl2::pixels::PixelFormatEnum::Index1LSB).unwrap();
+        let creator = canvas.texture_creator();
+        let mut texture = creator.create_texture_from_surface(white_surface).unwrap();
         self.pool.iter().filter(|particle| particle.is_alive).for_each(|particle|{
-            canvas.set_draw_color(particle.color);
-            let _ = canvas.fill_rect(sdl2::rect::Rect::new(particle.pos_x as i32, particle.pos_y as i32, particle.size_x, particle.size_y));
+            texture.set_color_mod(particle.color.r, particle.color.g, particle.color.b);
+            let dst = sdl2::rect::Rect::new(particle.pos_x as i32, particle.pos_y as i32, particle.size_x, particle.size_y);
+            let _ = canvas.copy_ex(&texture, None, dst, particle.rotation as f64, None, false, false);
         });
     }
 }
@@ -84,6 +93,7 @@ struct Particle {
     vel_y: f32,
     size_x: u32,
     size_y: u32,
+    rotation: f32,
     color: Color,
     lifetime: f32, // in seconds
     is_alive: bool,
@@ -97,6 +107,7 @@ pub struct ParticleType {
     color: Color,
 }
 pub enum ParticleEffect {
+    Rotation(f32),
     Moving((f32, f32)),
 }
 

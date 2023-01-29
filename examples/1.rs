@@ -51,7 +51,7 @@ fn main() -> Result<(), String>{
             .with_color(random_color)
             .with_effect(lib::ParticleEffect::Moving((random_velocity_x, -200.0)))
             .build();
-            
+
         particles_state.emit(5,emitting_type,400.0,300.0);
         particles_state.update(dt);
 
