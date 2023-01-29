@@ -4,19 +4,7 @@ impl ParticlesState {
     pub fn init(max_particles: u32) -> ParticlesState {
         let mut pool: Vec<Particle> = vec![];
         for _i in 0..max_particles {
-            pool.push(Particle {
-                pos_x: 0.0,
-                pos_y: 0.0,
-                vel_x: 0.0,
-                vel_y: 0.0,
-                vel_angular: 0.0,
-                size_x: 0,
-                size_y: 0,
-                color: Color::WHITE,
-                lifetime: 0.0,
-                is_alive: false,
-                rotation: 0.0,
-            })
+            pool.push(Particle::new())
         }
         return ParticlesState {
             pool,
@@ -36,6 +24,10 @@ impl ParticlesState {
                 if particle.lifetime <= 0.0 {
                     particle.is_alive = false
                 };
+                if particle.lifetime < particle.fade.1 {
+                    let how_much_opacity_to_lower = particle.fade.2 as f32 * dt;
+                    particle.alpha -= how_much_opacity_to_lower.max(0.0);
+                }
             });
     }
     pub fn emit(
@@ -47,6 +39,7 @@ impl ParticlesState {
     ) {
         for _i in 0..emitting_count {
             let particle = self.pool.get_mut(self.emitting_index).unwrap();
+            *particle = Particle::new(); // reset particle
             particle.pos_x = pos_x;
             particle.pos_y = pos_y;
             particle.size_x = emitting_type.size_x;
@@ -68,6 +61,12 @@ impl ParticlesState {
                     ParticleEffect::Rotating(angular_velocity) => {
                         particle.vel_angular = *angular_velocity;
                     }
+                    ParticleEffect::FadeOut(duration) => {
+                        let when_should_fade = particle.lifetime - duration.as_secs_f32();
+                        let how_much_time_will_be_fading = when_should_fade;
+                        let speed_of_fading_per_sec = 256.0 / how_much_time_will_be_fading;
+                        particle.fade = (true, when_should_fade, speed_of_fading_per_sec);
+                    }
                 });
             self.emitting_index += 1;
             if self.emitting_index > self.pool.len() - 1 {
@@ -76,6 +75,7 @@ impl ParticlesState {
         }
     }
     pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas) {
+        canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
         let mut pixel_data = [1];
         let white_surface = sdl2::surface::Surface::from_data(
             &mut pixel_data,
@@ -87,11 +87,13 @@ impl ParticlesState {
         .unwrap();
         let creator = canvas.texture_creator();
         let mut texture = creator.create_texture_from_surface(white_surface).unwrap();
+        texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         self.pool
             .iter()
             .filter(|particle| particle.is_alive)
             .for_each(|particle| {
                 texture.set_color_mod(particle.color.r, particle.color.g, particle.color.b);
+                texture.set_alpha_mod(particle.alpha as u8);
                 let dst = sdl2::rect::Rect::new(
                     particle.pos_x as i32,
                     particle.pos_y as i32,
@@ -125,8 +127,29 @@ struct Particle {
     size_y: u32,
     rotation: f32,
     color: Color,
-    lifetime: f32, // in seconds
+    alpha: f32,             //0 - 255
+    fade: (bool, f32, f32), // should fade, on what lifetime value should start fading, how much opacity per sec
+    lifetime: f32,          // in seconds
     is_alive: bool,
+}
+impl Particle {
+    fn new() -> Self {
+        Self {
+            pos_x: 0.0,
+            pos_y: 0.0,
+            vel_x: 0.0,
+            vel_y: 0.0,
+            vel_angular: 0.0,
+            size_x: 0,
+            size_y: 0,
+            rotation: 0.0,
+            color: Color::WHITE,
+            fade: (false, 0.0, 0.0),
+            lifetime: 0.0,
+            is_alive: false,
+            alpha: 255.0,
+        }
+    }
 }
 
 pub struct ParticleType {
@@ -140,6 +163,7 @@ pub enum ParticleEffect {
     Rotation(f32),
     Moving((f32, f32)),
     Rotating(f32),
+    FadeOut(std::time::Duration), // delay
 }
 
 pub struct ParticleTypeBuilder {
@@ -221,6 +245,24 @@ mod tests {
         assert_eq!(last.pos_y, 8.0);
         assert_eq!(last.lifetime, 2.0);
         assert_eq!(last.is_alive, true);
+    }
+
+    #[test]
+    fn particles_fading() {
+        let mut particles_state = crate::ParticlesState::init(4);
+        let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
+            .with_effect(crate::ParticleEffect::FadeOut(Duration::from_secs_f32(2.0)))
+            .build();
+        particles_state.emit(4, ptype, 0.0, 0.0);
+        {
+            let last = particles_state.pool.get_mut(3).unwrap();
+            assert_eq!(last.alpha, 255.0);
+        }
+        particles_state.update(Duration::from_secs(1));
+        particles_state.update(Duration::from_secs(1));
+        particles_state.update(Duration::from_secs(1));
+        let last = particles_state.pool.get_mut(3).unwrap();
+        assert_eq!(last.alpha, 127.0);
     }
 
     #[test]
