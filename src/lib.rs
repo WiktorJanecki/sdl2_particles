@@ -20,7 +20,7 @@ impl ParticlesState {
         }
         return ParticlesState {
             pool,
-            emitting_index: 0
+            emitting_index: 0,
         };
     }
     pub fn update(self: &mut Self, delta_time: std::time::Duration) {
@@ -45,7 +45,7 @@ impl ParticlesState {
         pos_x: f32,
         pos_y: f32,
     ) {
-        for _i in 0..emitting_count{
+        for _i in 0..emitting_count {
             let particle = self.pool.get_mut(self.emitting_index).unwrap();
             particle.pos_x = pos_x;
             particle.pos_y = pos_y;
@@ -54,36 +54,60 @@ impl ParticlesState {
             particle.color = emitting_type.color;
             particle.is_alive = true;
             particle.lifetime = emitting_type.lifetime;
-            emitting_type.effects.iter().for_each(|effect|{
-                match effect{
-                    ParticleEffect::Moving((x,y)) => {
+            emitting_type
+                .effects
+                .iter()
+                .for_each(|effect| match effect {
+                    ParticleEffect::Moving((x, y)) => {
                         particle.vel_x = *x;
                         particle.vel_y = *y;
-                    },
+                    }
                     ParticleEffect::Rotation(angle) => {
                         particle.rotation = *angle;
-                    },
+                    }
                     ParticleEffect::Rotating(angular_velocity) => {
                         particle.vel_angular = *angular_velocity;
-                    },
-                }
-            });
-            self.emitting_index+=1;
-            if self.emitting_index > self.pool.len() - 1{
+                    }
+                });
+            self.emitting_index += 1;
+            if self.emitting_index > self.pool.len() - 1 {
                 self.emitting_index = 0;
             }
         }
     }
-    pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas){
+    pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas) {
         let mut pixel_data = [1];
-        let white_surface = sdl2::surface::Surface::from_data(&mut pixel_data, 1, 1, 1, sdl2::pixels::PixelFormatEnum::Index1LSB).unwrap();
+        let white_surface = sdl2::surface::Surface::from_data(
+            &mut pixel_data,
+            1,
+            1,
+            1,
+            sdl2::pixels::PixelFormatEnum::Index1LSB,
+        )
+        .unwrap();
         let creator = canvas.texture_creator();
         let mut texture = creator.create_texture_from_surface(white_surface).unwrap();
-        self.pool.iter().filter(|particle| particle.is_alive).for_each(|particle|{
-            texture.set_color_mod(particle.color.r, particle.color.g, particle.color.b);
-            let dst = sdl2::rect::Rect::new(particle.pos_x as i32, particle.pos_y as i32, particle.size_x, particle.size_y);
-            let _ = canvas.copy_ex(&texture, None, dst, particle.rotation as f64, None, false, false);
-        });
+        self.pool
+            .iter()
+            .filter(|particle| particle.is_alive)
+            .for_each(|particle| {
+                texture.set_color_mod(particle.color.r, particle.color.g, particle.color.b);
+                let dst = sdl2::rect::Rect::new(
+                    particle.pos_x as i32,
+                    particle.pos_y as i32,
+                    particle.size_x,
+                    particle.size_y,
+                );
+                let _ = canvas.copy_ex(
+                    &texture,
+                    None,
+                    dst,
+                    particle.rotation as f64,
+                    None,
+                    false,
+                    false,
+                );
+            });
     }
 }
 
@@ -114,7 +138,7 @@ pub struct ParticleType {
 }
 pub enum ParticleEffect {
     Rotation(f32),
-    Moving((f32, f32)), 
+    Moving((f32, f32)),
     Rotating(f32),
 }
 
@@ -140,7 +164,7 @@ impl ParticleTypeBuilder {
         self.color = color;
         self
     }
-    pub fn with_effect(mut self: Self, effect: ParticleEffect)  -> Self  {
+    pub fn with_effect(mut self: Self, effect: ParticleEffect) -> Self {
         self.effects.push(effect);
         self
     }
@@ -185,12 +209,12 @@ mod tests {
     }
 
     #[test]
-    fn emit_particles(){
+    fn emit_particles() {
         let mut particles_state = crate::ParticlesState::init(16);
-        let ptype = crate::ParticleTypeBuilder::new(16,16,Duration::from_secs(4))
-            .with_effect(crate::ParticleEffect::Moving((5.0,4.0)))
+        let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
+            .with_effect(crate::ParticleEffect::Moving((5.0, 4.0)))
             .build();
-        particles_state.emit(4,ptype,0.0,0.0);
+        particles_state.emit(4, ptype, 0.0, 0.0);
         particles_state.update(Duration::from_secs(2));
         let last = particles_state.pool.get_mut(3).unwrap();
         assert_eq!(last.pos_x, 10.0);

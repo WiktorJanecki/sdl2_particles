@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use sdl2_particles as lib;
 
-fn main() -> Result<(), String>{
+fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
     let timer = sdl_context.timer().unwrap();
@@ -23,7 +23,11 @@ fn main() -> Result<(), String>{
         .build()
         .map_err(|e| e.to_string())?;
 
-    let mut canvas = window.into_canvas().present_vsync().build().map_err(|e| e.to_string())?;
+    let mut canvas = window
+        .into_canvas()
+        .present_vsync()
+        .build()
+        .map_err(|e| e.to_string())?;
 
     canvas.set_draw_color(Color::RGB(255, 0, 0));
     canvas.clear();
@@ -45,14 +49,15 @@ fn main() -> Result<(), String>{
         last_frame_time = timer.ticks();
         let mut rng = rand::thread_rng();
         let random_velocity_x = rng.gen_range(-50.0..50.0);
-        let random_color = sdl2::pixels::Color::RGB(0,rng.gen_range(0..255), rng.gen_range(0..128));
+        let random_color =
+            sdl2::pixels::Color::RGB(0, rng.gen_range(0..255), rng.gen_range(0..128));
 
         let emitting_type = lib::ParticleTypeBuilder::new(16, 16, Duration::from_secs(5))
             .with_color(random_color)
             .with_effect(lib::ParticleEffect::Moving((random_velocity_x, -200.0)))
             .build();
 
-        particles_state.emit(5,emitting_type,400.0,300.0);
+        particles_state.emit(5, emitting_type, 400.0, 300.0);
         particles_state.update(dt);
 
         canvas.set_draw_color(Color::RGB(0, 128, 255));
@@ -62,7 +67,7 @@ fn main() -> Result<(), String>{
 
         canvas.present();
 
-        std::thread::sleep(Duration::from_secs_f32(1.0/60.0));
+        std::thread::sleep(Duration::from_secs_f32(1.0 / 60.0));
     }
 
     Ok(())
