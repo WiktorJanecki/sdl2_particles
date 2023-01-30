@@ -51,18 +51,18 @@ impl ParticlesState {
                 .effects
                 .iter()
                 .for_each(|effect| match effect {
-                    ParticleEffect::Moving((x, y)) => {
-                        particle.vel_x = *x;
-                        particle.vel_y = *y;
+                    ParticleEffect::LinearMovement { velocity_x, velocity_y } => {
+                        particle.vel_x = *velocity_x;
+                        particle.vel_y = *velocity_y;
                     }
-                    ParticleEffect::Rotation(angle) => {
+                    ParticleEffect::ConstantRotation{ angle } => {
                         particle.rotation = *angle;
                     }
-                    ParticleEffect::Rotating(angular_velocity) => {
+                    ParticleEffect::LinearRotation{angular_velocity} => {
                         particle.vel_angular = *angular_velocity;
                     }
-                    ParticleEffect::FadeOut(duration) => {
-                        let when_should_fade = particle.lifetime - duration.as_secs_f32();
+                    ParticleEffect::FadeOut{delay} => {
+                        let when_should_fade = particle.lifetime - delay.as_secs_f32();
                         let how_much_time_will_be_fading = when_should_fade;
                         let speed_of_fading_per_sec = 256.0 / how_much_time_will_be_fading;
                         particle.fade = (true, when_should_fade, speed_of_fading_per_sec);
@@ -160,10 +160,10 @@ pub struct ParticleType {
     color: Color,
 }
 pub enum ParticleEffect {
-    Rotation(f32),
-    Moving((f32, f32)),
-    Rotating(f32),
-    FadeOut(std::time::Duration), // delay
+    ConstantRotation{angle:f32},
+    LinearMovement{velocity_x:f32, velocity_y:f32},
+    LinearRotation{angular_velocity: f32},
+    FadeOut{delay: std::time::Duration},
 }
 
 pub struct ParticleTypeBuilder {
@@ -236,7 +236,7 @@ mod tests {
     fn emit_particles() {
         let mut particles_state = crate::ParticlesState::init(16);
         let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
-            .with_effect(crate::ParticleEffect::Moving((5.0, 4.0)))
+            .with_effect(crate::ParticleEffect::LinearMovement{velocity_x:5.0, velocity_y:4.0})
             .build();
         particles_state.emit(4, ptype, 0.0, 0.0);
         particles_state.update(Duration::from_secs(2));
@@ -251,7 +251,7 @@ mod tests {
     fn particles_fading() {
         let mut particles_state = crate::ParticlesState::init(4);
         let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
-            .with_effect(crate::ParticleEffect::FadeOut(Duration::from_secs_f32(2.0)))
+            .with_effect(crate::ParticleEffect::FadeOut{delay: Duration::from_secs_f32(2.0)})
             .build();
         particles_state.emit(4, ptype, 0.0, 0.0);
         {

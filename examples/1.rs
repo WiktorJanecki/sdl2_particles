@@ -54,7 +54,7 @@ fn main() -> Result<(), String> {
 
         let emitting_type = lib::ParticleTypeBuilder::new(16, 16, Duration::from_secs(5))
             .with_color(random_color)
-            .with_effect(lib::ParticleEffect::Moving((random_velocity_x, -200.0)))
+            .with_effect(lib::ParticleEffect::LinearMovement{velocity_x:random_velocity_x,velocity_y: -200.0})
             .build();
 
         particles_state.emit(5, emitting_type, 400.0, 300.0);
