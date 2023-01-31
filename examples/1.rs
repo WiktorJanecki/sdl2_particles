@@ -57,7 +57,7 @@ fn main() -> Result<(), String> {
             .with_effect(lib::ParticleEffect::LinearMovement{velocity_x:random_velocity_x,velocity_y: -200.0})
             .build();
 
-        particles_state.emit(5, emitting_type, 400.0, 300.0);
+        particles_state.emit(5, &emitting_type, 400.0, 300.0);
         particles_state.update(dt);
 
         canvas.set_draw_color(Color::RGB(0, 128, 255));

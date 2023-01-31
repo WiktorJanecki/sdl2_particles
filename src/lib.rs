@@ -33,7 +33,7 @@ impl ParticlesState {
     pub fn emit(
         self: &mut Self,
         emitting_count: u32,
-        emitting_type: ParticleType,
+        emitting_type: &ParticleType,
         pos_x: f32,
         pos_y: f32,
     ) {
@@ -117,6 +117,8 @@ pub struct ParticlesState {
     pool: Vec<Particle>,
     emitting_index: usize,
 }
+
+#[derive(Clone)]
 struct Particle {
     pos_x: f32,
     pos_y: f32,
@@ -152,6 +154,7 @@ impl Particle {
     }
 }
 
+#[derive(Clone)]
 pub struct ParticleType {
     effects: Vec<ParticleEffect>,
     lifetime: f32,
@@ -159,6 +162,8 @@ pub struct ParticleType {
     size_y: u32,
     color: Color,
 }
+
+#[derive(Clone, Copy)]
 pub enum ParticleEffect {
     ConstantRotation{angle:f32},
     LinearMovement{velocity_x:f32, velocity_y:f32},
@@ -238,7 +243,7 @@ mod tests {
         let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
             .with_effect(crate::ParticleEffect::LinearMovement{velocity_x:5.0, velocity_y:4.0})
             .build();
-        particles_state.emit(4, ptype, 0.0, 0.0);
+        particles_state.emit(4, &ptype, 0.0, 0.0);
         particles_state.update(Duration::from_secs(2));
         let last = particles_state.pool.get_mut(3).unwrap();
         assert_eq!(last.pos_x, 10.0);
@@ -253,7 +258,7 @@ mod tests {
         let ptype = crate::ParticleTypeBuilder::new(16, 16, Duration::from_secs(4))
             .with_effect(crate::ParticleEffect::FadeOut{delay: Duration::from_secs_f32(2.0)})
             .build();
-        particles_state.emit(4, ptype, 0.0, 0.0);
+        particles_state.emit(4, &ptype, 0.0, 0.0);
         {
             let last = particles_state.pool.get_mut(3).unwrap();
             assert_eq!(last.alpha, 255.0);

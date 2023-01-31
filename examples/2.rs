@@ -59,7 +59,7 @@ fn main() -> Result<(), String> {
             .with_effect(lib::ParticleEffect::FadeOut{delay: Duration::from_secs_f32(1.0)})
             .build();
 
-        particles_state.emit(5, emitting_type, 400.0, 600.0);
+        particles_state.emit(5, &emitting_type, 400.0, 600.0);
         particles_state.update(dt);
 
         canvas.set_draw_color(Color::RGB(0, 128, 255));
