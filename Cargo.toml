@@ -2,8 +2,14 @@
 name = "sdl2_particles"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Wiktor Janecki <j.wiktor05@interia.pl>"]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/wiktorjanecki/sdl2_particles"
+homepage = "https://github.com/wiktorjanecki/sdl2_particles"
+description = """
+Rust library made for creating particles using sdl2
+"""
 
 [dependencies]
 rand = "0.8.5"
