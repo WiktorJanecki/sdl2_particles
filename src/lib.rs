@@ -74,7 +74,10 @@ impl ParticlesState {
             }
         }
     }
-    pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas) {
+    pub fn render(self: &mut Self, canvas: &mut sdl2::render::WindowCanvas){
+        self.render_with_offset(0, 0, canvas);
+    }
+    pub fn render_with_offset(self: &mut Self, offset_x: i32, offset_y: i32, canvas: &mut sdl2::render::WindowCanvas) {
         canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
         let mut pixel_data = [1];
         let white_surface = sdl2::surface::Surface::from_data(
@@ -95,8 +98,8 @@ impl ParticlesState {
                 texture.set_color_mod(particle.color.r, particle.color.g, particle.color.b);
                 texture.set_alpha_mod(particle.alpha as u8);
                 let dst = sdl2::rect::Rect::new(
-                    particle.pos_x as i32,
-                    particle.pos_y as i32,
+                    particle.pos_x as i32 + offset_x,
+                    particle.pos_y as i32 + offset_y,
                     particle.size_x,
                     particle.size_y,
                 );
