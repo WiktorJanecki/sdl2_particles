@@ -113,6 +113,10 @@ impl ParticlesState {
                     false,
                 );
             });
+        #[cfg(feature="use-unsafe_textures")]
+        unsafe{
+            texture.destroy();
+        }
     }
 }
 

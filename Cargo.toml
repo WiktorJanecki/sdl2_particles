@@ -1,6 +1,6 @@
 [package]
 name = "sdl2_particles"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Wiktor Janecki <j.wiktor05@interia.pl>"]
 readme = "README.md"
@@ -14,3 +14,6 @@ Rust library made for creating particles using sdl2
 [dependencies]
 rand = "0.8.5"
 sdl2 = { version = "0.35.2", features = ["image"] }
+
+[features]
+use-unsafe_textures = ["sdl2/unsafe_textures"]
